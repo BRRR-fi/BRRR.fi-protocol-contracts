@@ -50,7 +50,7 @@ contract Brrr3x is Context, IERC20, AccessControl {
     string private _symbol;
     uint8 private _decimals;
 
-    address public tether = 0xf3e0d7bF58c5d455D31ef1c2d5375904dF525105; // 0x0040335fB530e891Cac7CfE31F6bBb050b20a840;
+    address public tether = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address public brrr;
 
     struct supplyCheck {
@@ -83,8 +83,8 @@ contract Brrr3x is Context, IERC20, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDING_FATHER, msg.sender);
         Tether = IERC20(tether);
-        _balances[msg.sender] = 1000000000 * 10**18;
-        _circulatingSupply = 1000000000 * 10**18;
+        _balances[msg.sender] = 100000000 * 10**18;
+        _circulatingSupply = 100000000 * 10**18;
         uint256 d = Tether.totalSupply();
         TreasuryReserve = d * 10**12;
         _totalSupply = TreasuryReserve;
@@ -586,5 +586,9 @@ contract Brrr3x is Context, IERC20, AccessControl {
 
         require(_brrrcontract != address(0x0), "Invalid address!");
         brrr = _brrrcontract;
+    }
+
+    fallback() external payable {
+        revert();
     }
 }

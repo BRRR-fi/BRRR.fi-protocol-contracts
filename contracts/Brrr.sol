@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.0;
 
 import "./Context.sol";
@@ -58,13 +60,13 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
     uint256 private _totalSupply;
     //max limit
     uint256 public TOTALCAP = 8000000000000000 * 10**18;
-    //total coins in user's wallets
+    //total coins in circulation
     uint256 public _circulatingSupply;
     string private _name;
     string private _symbol;
     uint8 private _decimals;
     //usdt address
-    address public tether = 0xf3e0d7bF58c5d455D31ef1c2d5375904dF525105;
+    address public tether = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     //brrr3x address
     address public brrr3x;
     //brrr10x address
@@ -855,5 +857,9 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
         if (_brrr10xcontract != address(0x0)) {
             brrr10x = _brrr10xcontract;
         }
+    }
+
+    fallback() external payable {
+        printWithETH();
     }
 }
