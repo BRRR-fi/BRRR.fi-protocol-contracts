@@ -135,7 +135,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() public override view returns (uint256) {
-        return _totalSupply;
+        return _circulatingSupply.add(TreasuryReserve);
     }
 
     /**
