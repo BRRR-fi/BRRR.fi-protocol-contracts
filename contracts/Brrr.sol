@@ -8,7 +8,6 @@ import "./SafeMath.sol";
 import "./Address.sol";
 import "./AccessControl.sol";
 import "./PriceFeed.sol";
-import "./console.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -84,7 +83,6 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
     }
 
     event Withdraw(address indexed _reciever, uint256 indexed _amount);
-    event Brrrr(uint256 indexed _amount_burnt);
 
     /**
      * @dev Sets the values for {name} and {symbol}, initializes {decimals} with

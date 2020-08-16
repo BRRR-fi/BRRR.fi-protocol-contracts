@@ -7,7 +7,6 @@ import "./IERC20.sol";
 import "./SafeMath.sol";
 import "./Address.sol";
 import "./AccessControl.sol";
-import "./console.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -59,8 +58,6 @@ contract Brrr3x is Context, IERC20, AccessControl {
     }
 
     event Withdraw(address indexed _reciever, uint256 indexed _amount);
-    event Brrrr(uint256 indexed _amount_burnt);
-    event StimulusCreated(uint256 total_brrr_package, uint256 _ending_date);
 
     /**
      * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
@@ -208,7 +205,6 @@ contract Brrr3x is Context, IERC20, AccessControl {
         uint256 amount
     ) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        console.log(msg.sender);
         if (msg.sender != brrr) {
             _approve(
                 sender,
