@@ -38,6 +38,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
 
     //list of accepted coins for transferring
     mapping(address => bool) public _acceptedStableCoins;
+    mapping(address => bool) public BRRRxContracts;
     //address of the oracle price feed for accept coins
     mapping(address => address) private _contract_address_to_oracle;
     //deposits for each user in eth
@@ -50,6 +51,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
     mapping(address => mapping(uint128 => bool)) public _claimed_stimulus;
     //all stimulus ids
     mapping(uint128 => bool) public _all_Claim_ids;
+    mapping(address => bool) public swapped;
     //stimulus id to stimulus info
     mapping(uint128 => Claims) public _all_Claims;
     //tether total supply checks/history
@@ -65,11 +67,8 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
     string private _symbol;
     uint8 private _decimals;
     //usdt address
-    address public tether = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    //brrr3x address
-    address public brrr3x;
-    //brrr10x address
-    address public brrr10x;
+    address public tether = 0xA0C1785EF629AAB7B75C58D3FC457819BD2E8292; //0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address public old_brrr = 0x30b53f1c3E4EF1012CCEd5dd467E1B9666b6dA44;
 
     struct Claims {
         uint256 _amount;
@@ -101,14 +100,14 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
         _decimals = 18;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDING_FATHER, msg.sender);
-        Tether = IERC20(tether);
-        uint256 d = Tether.totalSupply();
-        TreasuryReserve = d * 10**13;
+        //Tether = IERC20(tether);
+        //uint256 d = Tether.totalSupply();
+        TreasuryReserve = 6877479171538729 * 10**13;
         _balances[msg.sender] = 210000000 * 10**18;
         _circulatingSupply = 210000000 * 10**18;
         _totalSupply = TreasuryReserve.sub(_circulatingSupply);
         TreasuryReserve = TreasuryReserve.sub(_circulatingSupply);
-        supplyCheck memory sa = supplyCheck(block.timestamp, d);
+        supplyCheck memory sa = supplyCheck(block.timestamp, 6877479171538729);
         _all_supply_checks.push(sa);
     }
 
@@ -207,7 +206,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
         uint256 amount
     ) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        if (msg.sender != brrr3x && msg.sender != brrr10x) {
+        if (BRRRxContracts[msg.sender] != true) {
             _approve(
                 sender,
                 _msgSender(),
@@ -392,6 +391,18 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
             .sub(_returnAmount);
         _transferCoin(_owner, _contract, _returnAmount);
         emit Withdraw(address(_owner), _returnAmount);
+        return true;
+    }
+
+    function swapOldBRRR() external isOnline returns (bool) {
+        require(swapped[_msgSender()] == false, "You already swapped!");
+        IERC20 erc;
+        erc = IERC20(old_brrr);
+        uint256 bal = erc.balanceOf(_msgSender());
+        require(bal >= 0, "Not enough funds to transfer");
+        swapped[_msgSender()] = true;
+        require(erc.transferFrom(_msgSender(), address(this), bal));
+        _mint(_msgSender(), bal);
         return true;
     }
 
@@ -649,7 +660,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
                 brr.transferFrom(_msgSender(), address(this), brrbalance),
                 "Transfer failed"
             );
-            _mint(_msgSender(), brrbalance);
+            _mint(_msgSender(), brrbalance.div(10));
         }
         return true;
     }
@@ -658,9 +669,13 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
      *  Deposits on brrrX will not be cleared.
      *
      * */
-    function convertBrrrXintoBrrr() public isOnline returns (bool) {
-        _transferBrr(address(brrr3x));
-        _transferBrr(address(brrr10x));
+    function convertBrrrXintoBrrr(address _contract)
+        public
+        isOnline
+        returns (bool)
+    {
+        require(BRRRxContracts[_contract] == true, "Not a BRRRx contract");
+        _transferBrr(address(_contract));
         return true;
     }
 
@@ -782,11 +797,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
     function EmergencyWithdrawalETH() public isOffline returns (bool) {
         require(!Online, "Contract is not turned off");
         require(_deposits_eth[_msgSender()] > 0, "You have no deposits");
-        _payBackBrrrETH(
-            _balances[_msgSender()],
-            _msgSender(),
-            _deposits_eth[_msgSender()]
-        );
+        _payBackBrrrETH(0, _msgSender(), _deposits_eth[_msgSender()]);
         return true;
     }
 
@@ -810,7 +821,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
             "You have no deposits"
         );
         _payBackBrrrCoins(
-            _balances[_msgSender()],
+            0,
             _msgSender(),
             _contract,
             _coin_deposits[_msgSender()][_contract]
@@ -837,7 +848,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
      * Must be admin
      *
      * */
-    function setBrrrXAddress(address _brrr3xcontract, address _brrr10xcontract)
+    function setBrrrXAddress(address _brrrxcontract, bool _active)
         public
         returns (bool)
     {
@@ -845,16 +856,21 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Caller is not an admin"
         );
+
+        if (_brrrxcontract != address(0x0)) {
+            BRRRxContracts[_brrrxcontract] = _active;
+        }
+        return true;
+    }
+
+    function setSwapAddress(address _brrr_old) public returns (bool) {
         require(
-            brrr3x == address(0x0) && brrr10x == address(0x0),
-            "Already set the addresses"
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Caller is not an admin"
         );
-        if (_brrr3xcontract != address(0x0)) {
-            brrr3x = _brrr3xcontract;
-        }
-        if (_brrr10xcontract != address(0x0)) {
-            brrr10x = _brrr10xcontract;
-        }
+
+        require(_brrr_old != address(0x0), "Invalid address!");
+        old_brrr = _brrr_old;
     }
 
     fallback() external payable {

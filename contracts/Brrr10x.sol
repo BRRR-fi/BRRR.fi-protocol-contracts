@@ -7,6 +7,7 @@ import "./IERC20.sol";
 import "./SafeMath.sol";
 import "./Address.sol";
 import "./AccessControl.sol";
+import "console.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -37,20 +38,23 @@ contract Brrr10x is Context, IERC20, AccessControl {
 
     mapping(address => uint256) public _deposits_brrr;
 
+    mapping(address => uint256) public weighted_avg;
     mapping(address => uint256) public _total_withdrawals;
+    mapping(address => bool) public swapped;
 
     supplyCheck[] public _all_supply_checks;
     uint256 public TreasuryReserve;
     uint256 private _totalSupply;
     uint256 public TOTALCAP = 8000000000000000 * 10**18;
 
-    uint256 private _circulatingSupply;
+    uint256 public _circulatingSupply;
     string private _name;
     string private _symbol;
     uint8 private _decimals;
 
-    address public tether = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address public tether = 0x6Bd845eB3769F1eDE5FAaDCd167b9440faC9036D; // 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address public brrr;
+    address public old_brrr10x = 0x30b53f1c3E4EF1012CCEd5dd467E1B9666b6dA44;
 
     struct supplyCheck {
         uint256 _last_check;
@@ -79,18 +83,14 @@ contract Brrr10x is Context, IERC20, AccessControl {
         brrr = _brrr;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDING_FATHER, msg.sender);
-        Tether = IERC20(tether);
+        //Tether = IERC20(tether);
         _balances[msg.sender] = 100000000 * 10**18;
         _circulatingSupply = 100000000 * 10**18;
-        uint256 d = Tether.totalSupply();
-        TreasuryReserve = d * 10**12;
+        //uint256 d = Tether.totalSupply();
+        TreasuryReserve = 6877479171538729 * 10**13;
         _totalSupply = TreasuryReserve;
-        supplyCheck memory sa = supplyCheck(block.timestamp, d);
+        supplyCheck memory sa = supplyCheck(block.timestamp, 6877479171538729);
         _all_supply_checks.push(sa);
-    }
-
-    function setTether(address _addy) public {
-        Tether = IERC20(_addy);
     }
 
     /**
@@ -425,6 +425,18 @@ contract Brrr10x is Context, IERC20, AccessControl {
         return TOTALCAP;
     }
 
+    function swapOldBRRR() external isOnline returns (bool) {
+        require(swapped[_msgSender()] == false, "You already swapped!");
+        IERC20 erc;
+        erc = IERC20(old_brrr10x);
+        uint256 bal = erc.balanceOf(_msgSender());
+        require(bal >= 0, "Not enough funds to transfer");
+        swapped[_msgSender()] = true;
+        require(erc.transferFrom(_msgSender(), address(this), bal));
+        _mint(_msgSender(), bal);
+        return true;
+    }
+
     function calculateWithdrawalPrice() internal view returns (uint256) {
         uint256 p = calculateCurve();
         uint256 w = _total_withdrawals[_msgSender()];
@@ -470,14 +482,28 @@ contract Brrr10x is Context, IERC20, AccessControl {
     }
 
     function printWithBrrr(uint256 _amount) public isOnline returns (bool) {
+        console.log("Printing BRRR with brrr, amount sent is: ", _amount);
         require(brrr != address(0x0), "Brrr contract not set");
         IERC20 brr;
         brr = IERC20(brrr);
         uint256 al = brr.balanceOf(_msgSender());
         require(al >= _amount, "Token balance not enough");
         uint256 p = calculateCurve();
+        console.log("current bonding price for 10x is: ", p);
         uint256 tp = brr.calculateCurve();
+        console.log("current bonding price for BRRR is: ", tp);
+        if (weighted_avg[_msgSender()] == 0) {
+            weighted_avg[_msgSender()] = tp;
+        } else {
+            uint256 temp = _deposits_brrr[_msgSender()]
+                .mul(weighted_avg[_msgSender()])
+                .add(_amount.mul(tp));
+            temp = temp.div(_deposits_brrr[_msgSender()].add(_amount));
+            console.log("new weighted avg is: ", temp);
+            weighted_avg[_msgSender()] = temp;
+        }
         uint256 a = _amount.mul(tp).div(p);
+        console.log("amount of BRRR10x made: ", a);
         require(a > 0, "Not enough sent for 1 brrr");
         require(
             brr.transferFrom(_msgSender(), address(this), _amount),
@@ -491,17 +517,34 @@ contract Brrr10x is Context, IERC20, AccessControl {
     }
 
     function returnBrrrForBrrr() public isOnline returns (bool) {
+        console.log("returning deposit for user");
         require(brrr != address(0x0), "Brrr contract not set");
         require(_deposits_brrr[_msgSender()] != 0, "You have no deposits");
         require(_balances[_msgSender()] > 0, "No brrr balance");
         uint256 o = calculateWithdrawalPrice();
-        uint256 rg = _deposits_brrr[_msgSender()].div(o).mul(10**18);
+        console.log("Current withdrawal bonding curve for 10x: ", o);
+        uint256 y = weighted_avg[_msgSender()];
+        console.log("Bonding curve price for BRRR: ", y);
+        uint256 rg = _deposits_brrr[_msgSender()].mul(y).div(o);
+        console.log(
+            "BRRR x BRRRCurve divided by Withdrawal curve (amount of deposit to get back) is: ",
+            rg
+        );
+        console.log("current balance is: ", _balances[_msgSender()]);
         if (_balances[_msgSender()] >= rg) {
+            weighted_avg[_msgSender()] = 0;
             _payBackBrrr(rg, _msgSender(), _deposits_brrr[_msgSender()]);
         } else {
-            uint256 t = _balances[_msgSender()].mul(o).div(10**18);
+            console.log(
+                "balances are not enough, current amount they have is able to get: "
+            );
+            console.log("balance: ", _balances[_msgSender()]);
+            uint256 a = _balances[_msgSender()].mul(o).div(10**18);
+            console.log("eth value in current BRRR10x: ", a);
+            uint256 t = a.mul(10**18).div(y);
+            console.log("BRRR divided by ETH value to give back the BRRR: ", t);
             require(
-                t <= _balances[_msgSender()],
+                t <= _deposits_brrr[_msgSender()],
                 "More than in your balance, error with math"
             );
             _payBackBrrr(_balances[_msgSender()], _msgSender(), t);
@@ -558,11 +601,7 @@ contract Brrr10x is Context, IERC20, AccessControl {
     function EmergencyWithdrawal() public isOffline returns (bool) {
         require(!Online, "Contract is not turned off");
         require(_deposits_brrr[_msgSender()] > 0, "You have no deposits");
-        _payBackBrrr(
-            _balances[_msgSender()],
-            _msgSender(),
-            _deposits_brrr[_msgSender()]
-        );
+        _payBackBrrr(0, _msgSender(), _deposits_brrr[_msgSender()]);
         return true;
     }
 
@@ -583,6 +622,16 @@ contract Brrr10x is Context, IERC20, AccessControl {
 
         require(_brrrcontract != address(0x0), "Invalid address!");
         brrr = _brrrcontract;
+    }
+
+    function setSwapAddress(address _brrr_old) public returns (bool) {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Caller is not an admin"
+        );
+
+        require(_brrr_old != address(0x0), "Invalid address!");
+        old_brrr10x = _brrr_old;
     }
 
     fallback() external payable {
