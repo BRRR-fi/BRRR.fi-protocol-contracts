@@ -76,6 +76,32 @@ If there is a difference, the total supply and the block time is stored in the s
 
 The difference is burned/minted depending on what USDT did, if it minted 300million USDT, BRRR burns 300million BRRR. And 300k BRRR goes to the rebaser. Visa verse for USDT burns.
 
+## Peg Formula 
+
+BRRR Supply Formula
+<p align="center">
+  <img src="https://gblobscdn.gitbook.com/assets%2F-MEQHcVFL9xf9FdJXjvF%2F-MF0g8vQfFhy35aD5pWs%2F-MF0gIZHMbh89C_awZkM%2F5206c96846175fdb74891cd2a42f3ecb.png?alt=media&token=85ca9e4f-86ee-4f46-a2d6-a6a41cdecb3e" />
+</p>
+**1 General Formula**
+When an BRRREvent happens (Tether prints more USDT, or burns, but we all know they never burn any USDT), the treasury reserve reduces or increases its supply based off the amount  that was changed. 
+BRRR3X and BRRR10X do this 3x and 10x more, effectively providing much more exposure to the inverse peg of USDT. 
+The following formula dictates the total supply of BRRR tokens that exist in the Treasury Reserve at any given time:
+
+<p align="center">
+  <img src="https://gblobscdn.gitbook.com/assets%2F-MEQHcVFL9xf9FdJXjvF%2F-MF0g8vQfFhy35aD5pWs%2F-MF0gIZHMbh89C_awZkM%2F5206c96846175fdb74891cd2a42f3ecb.png?alt=media&token=85ca9e4f-86ee-4f46-a2d6-a6a41cdecb3e" />
+</p>
+Now since the BRRR protocol offers leverage tokens, we might be tempted to understand the supply of BRRR3x and BRRR10x. The general formula for those can be derived from (1):
+
+<p align="center">
+  <img src="https://gblobscdn.gitbook.com/assets%2F-MEQHcVFL9xf9FdJXjvF%2F-MF0g8vQfFhy35aD5pWs%2F-MF0gLWdoPa3USInI4Gy%2Fa57d140575a85ec5563f650c01f95916.png?alt=media&token=f7d0c878-b14a-41e8-a28c-db41b7fc1d7e" />
+</p>
+
+**New Formulas** 
+The problem with formula (2) is that we are multiplying very large numbers, which might pose a problem in terms of computation in the smart contract. In light of this, we are proposing a new formula that is the same as the original. It uses a logarithmic transformation of (2) as follows:
+
+<p align="center">
+  <img src="https://gblobscdn.gitbook.com/assets%2F-MEQHcVFL9xf9FdJXjvF%2F-MF0g8vQfFhy35aD5pWs%2F-MF0gOBhMNq4A2v642c_%2F0f266f2765cd2c5f59c2a1dff02c8948.png?alt=media&token=fe34fcb0-bec1-4a49-a80d-4af9bbb3953b" />
+</p>
 
 ## Smart contracts
 
