@@ -74,7 +74,7 @@ If the totalSupply is different from the last supply check, it will process the 
 
 If there is a difference, the total supply and the block time is stored in the supply_checks history for future checks. 
 
-The difference is burned/minted depending on what USDT did, if it minted 300million USDT, BRRR burns 300million BRRR. And 300k BRRR goes to the rebaser. Visa verse for USDT burns.
+The difference is burned/minted depending on what USDT did, if it minted 3% of its total USDT, BRRR burns 3% of its total BRRR. And .00003% BRRR goes to the rebaser. Visa verse for USDT burns.
 
 ## Peg Formula 
 
