@@ -79,10 +79,9 @@ The difference is burned/minted depending on what USDT did, if it minted 300mill
 ## Peg Formula 
 
 BRRR Supply Formula
-<p align="center">
-  <img src="https://gblobscdn.gitbook.com/assets%2F-MEQHcVFL9xf9FdJXjvF%2F-MF0g8vQfFhy35aD5pWs%2F-MF0gIZHMbh89C_awZkM%2F5206c96846175fdb74891cd2a42f3ecb.png?alt=media&token=85ca9e4f-86ee-4f46-a2d6-a6a41cdecb3e" />
-</p>
+
 **1 General Formula**
+
 When an BRRREvent happens (Tether prints more USDT, or burns, but we all know they never burn any USDT), the treasury reserve reduces or increases its supply based off the amount  that was changed. 
 BRRR3X and BRRR10X do this 3x and 10x more, effectively providing much more exposure to the inverse peg of USDT. 
 The following formula dictates the total supply of BRRR tokens that exist in the Treasury Reserve at any given time:
@@ -96,7 +95,7 @@ Now since the BRRR protocol offers leverage tokens, we might be tempted to under
   <img src="https://gblobscdn.gitbook.com/assets%2F-MEQHcVFL9xf9FdJXjvF%2F-MF0g8vQfFhy35aD5pWs%2F-MF0gLWdoPa3USInI4Gy%2Fa57d140575a85ec5563f650c01f95916.png?alt=media&token=f7d0c878-b14a-41e8-a28c-db41b7fc1d7e" />
 </p>
 
-**New Formulas** 
+**New Formulas**
 The problem with formula (2) is that we are multiplying very large numbers, which might pose a problem in terms of computation in the smart contract. In light of this, we are proposing a new formula that is the same as the original. It uses a logarithmic transformation of (2) as follows:
 
 <p align="center">
