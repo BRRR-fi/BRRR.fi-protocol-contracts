@@ -106,11 +106,11 @@ The problem with formula (2) is that we are multiplying very large numbers, whic
 
 There are 3 main smart contracts for BRRR. BRRR, BRRR3X and BRRR10x. 
 ```
-BRRR - Address (mainnet): 
+BRRR - Address (mainnet): https://etherscan.io/token/0xddcf41fd32eabbf42a4e436a65673081cba0570b
 
-BRRR3X -  Address (mainnet): 
+BR3X -  Address (mainnet): https://etherscan.io/token/0xefa8385d45bced3329fe3a7ec91436af56e8702c
 
-BRRR10x -  Address (mainnet): 
+BR10x -  Address (mainnet): https://etherscan.io/token/0x5e66f21737117cd0cf07ca6a0f08cc1706948472
 ```
 
 
