@@ -53,9 +53,9 @@ contract BRRRx is Context, IERC20, AccessControl {
     string private _symbol;
     uint8 private _decimals;
 
-    address public tether = 0x3B4486b8889B3b35f15fF059be20a73635439FE6; // 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address public tether = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address public brrr;
-    address public old_brrrx = 0x30b53f1c3E4EF1012CCEd5dd467E1B9666b6dA44;
+    address public old_brrrx = 0xb70E8a16E58B4Ea4E714F1639Fd06bB79aD83A80;
 
     struct supplyCheck {
         uint256 _last_check;
@@ -450,13 +450,16 @@ contract BRRRx is Context, IERC20, AccessControl {
         return true;
     }
 
-    function calculateWithdrawalPrice() internal view returns (uint256) {
+    function calculateWithdrawalPrice() public view returns (uint256) {
         uint256 p = calculateCurve();
         uint256 w = _total_withdrawals[_msgSender()];
         if (w < 1) {
-            w = 1;
+            return p;
         }
-        p = p.div(w);
+        if (w >= 99) {
+            w = 99;
+        }
+        p = p.sub(p.mul(w).div(100));
         return p;
     }
 
