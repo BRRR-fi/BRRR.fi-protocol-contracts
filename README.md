@@ -29,7 +29,7 @@ BRRR, BRRR3X, and BRRR10X are built to achieve:
 
 *   a treasury reserve to further support stability and provide swaps.
 
-*  Completely secure smart contracts with fail switches in the event of any catastrophic bug so no deposited funds can even be lost.
+*  Smart contracts with fail switches in the event of any catastrophic bug so no deposited funds can even be lost.
 
 *   Continuous rebasing of the treasury reserves to drive price stability.
 
