@@ -43,7 +43,7 @@ contract BRRRx is Context, IERC20, AccessControl {
     mapping(address => bool) public swapped;
 
     supplyCheck[] public _all_supply_checks;
-    uint256 _leverage;
+    uint256 private _leverage;
     uint256 public TreasuryReserve;
     uint256 private _totalSupply;
     uint256 public TOTALCAP = 80000000000 * 10**18;
@@ -56,7 +56,7 @@ contract BRRRx is Context, IERC20, AccessControl {
     address public tether = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address public brrr;
     address public old_brrrx = 0xb70E8a16E58B4Ea4E714F1639Fd06bB79aD83A80;
-
+    address public old_v2_brrrx = 0xEfa8385d45bCeD3329fE3A7EC91436AF56e8702c;
     struct supplyCheck {
         uint256 _last_check;
         uint256 _totalSupply;
@@ -133,6 +133,10 @@ contract BRRRx is Context, IERC20, AccessControl {
      */
     function totalSupply() public override view returns (uint256) {
         return _circulatingSupply.add(TreasuryReserve);
+    }
+
+    function leverage() public override view returns (uint256) {
+        return _leverage;
     }
 
     /**
@@ -450,6 +454,18 @@ contract BRRRx is Context, IERC20, AccessControl {
         return true;
     }
 
+    function swapv2BRRR() external isOnline returns (bool) {
+        require(swapped[_msgSender()] == false, "You already swapped!");
+        IERC20 erc;
+        erc = IERC20(old_v2_brrrx);
+        uint256 bal = erc.balanceOf(_msgSender());
+        require(bal >= 0, "Not enough funds to transfer");
+        swapped[_msgSender()] = true;
+        require(erc.transferFrom(_msgSender(), address(this), bal));
+        _mint(_msgSender(), bal);
+        return true;
+    }
+
     function calculateWithdrawalPrice() public view returns (uint256) {
         uint256 p = calculateCurve();
         uint256 w = _total_withdrawals[_msgSender()];
@@ -647,6 +663,16 @@ contract BRRRx is Context, IERC20, AccessControl {
 
         require(_brrr_old != address(0x0), "Invalid address!");
         old_brrrx = _brrr_old;
+    }
+
+    function setSwapAddressv2(address _brrr_old) public returns (bool) {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Caller is not an admin"
+        );
+
+        require(_brrr_old != address(0x0), "Invalid address!");
+        old_v2_brrrx = _brrr_old;
     }
 
     fallback() external payable {

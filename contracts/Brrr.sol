@@ -67,10 +67,11 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
+    uint256 private _leverage = 0;
     //usdt address
     address public tether = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address public old_brrr = 0xdF3b985E15281EfecF203998200b26F024699F47;
-
+    address public old_v2_brrr = 0xddcF41FD32eaBbF42A4e436A65673081Cba0570b;
     struct Claims {
         uint256 _amount;
         uint256 _ending;
@@ -129,6 +130,10 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
 
     function decimals() public view returns (uint8) {
         return _decimals;
+    }
+
+    function leverage() public override view returns (uint256) {
+        return _leverage;
     }
 
     /**
@@ -406,6 +411,18 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
         return true;
     }
 
+    function swapv2BRRR() external isOnline returns (bool) {
+        require(swapped[_msgSender()] == false, "You already swapped!");
+        IERC20 erc;
+        erc = IERC20(old_v2_brrr);
+        uint256 bal = erc.balanceOf(_msgSender());
+        require(bal >= 0, "Not enough funds to transfer");
+        swapped[_msgSender()] = true;
+        require(erc.transferFrom(_msgSender(), address(this), bal));
+        _mint(_msgSender(), bal);
+        return true;
+    }
+
     /**
      * @dev Sets `amount` as the allowance of `spender` over the `owner`s tokens.
      *
@@ -661,12 +678,14 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
         IERC20 brr;
         brr = IERC20(_contract);
         uint256 brrbalance = brr.balanceOf(_msgSender());
+        uint256 lev = brr.leverage();
+
         if (brrbalance > 0) {
             require(
                 brr.transferFrom(_msgSender(), address(this), brrbalance),
                 "Transfer failed"
             );
-            _mint(_msgSender(), brrbalance.div(10));
+            _mint(_msgSender(), brrbalance.div(lev));
         }
         return true;
     }
@@ -880,7 +899,7 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
         return true;
     }
 
-    function setSwapAddress(address _brrr_old) public returns (bool) {
+    function setSwapAddressv1(address _brrr_old) public returns (bool) {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Caller is not an admin"
@@ -888,6 +907,16 @@ contract Brrr is Context, IERC20, AccessControl, PriceFeed {
 
         require(_brrr_old != address(0x0), "Invalid address!");
         old_brrr = _brrr_old;
+    }
+
+    function setSwapAddressv2(address _brrr_old) public returns (bool) {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Caller is not an admin"
+        );
+
+        require(_brrr_old != address(0x0), "Invalid address!");
+        old_v2_brrr = _brrr_old;
     }
 
     fallback() external payable {
